@@ -1,6 +1,25 @@
-import React from 'react'
-import { CheckCircle2, ShieldCheck, Lock, Clock, Users, Server, BookOpenText, FileCode2, ArrowRight, Code2 } from 'lucide-react'
-import Spline from '@splinetool/react-spline'
+import React, { lazy, Suspense, useState } from 'react'
+import { CheckCircle2, ShieldCheck, Lock, Clock, Server, BookOpen, ArrowRight, Code2 } from 'lucide-react'
+
+// Lazy-load Spline to avoid blocking initial render and prevent WebGL issues from breaking the page
+const LazySpline = lazy(() => import('@splinetool/react-spline'))
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false }
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+  componentDidCatch() {}
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback
+    }
+    return this.props.children
+  }
+}
 
 const Nav = () => (
   <header className="sticky top-0 z-20 backdrop-blur bg-white/60 border-b border-black/5">
@@ -39,6 +58,16 @@ const Stat = ({ value, label }) => (
   </div>
 )
 
+const SplineFallback = () => (
+  <div className="relative h-full w-full rounded-3xl overflow-hidden">
+    <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/10 via-cyan-400/10 to-indigo-500/10" />
+    <div className="absolute inset-0 animate-pulse bg-[radial-gradient(100%_50%_at_50%_0%,rgba(59,130,246,0.15)_0%,transparent_60%)]" />
+    <div className="relative h-full w-full grid place-items-center">
+      <div className="px-4 py-2 rounded-full bg-white/80 border border-black/10 text-xs text-gray-700">3D preview loading…</div>
+    </div>
+  </div>
+)
+
 const Hero = () => (
   <section className="relative overflow-hidden">
     <div className="absolute inset-0 pointer-events-none">
@@ -65,7 +94,7 @@ const Hero = () => (
             Start Integration <ArrowRight className="h-4 w-4"/>
           </a>
           <a href="#docs" className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white hover:bg-gray-50 text-gray-900 text-sm font-semibold border border-black/10">
-            View Documentation <BookOpenText className="h-4 w-4"/>
+            View Documentation <BookOpen className="h-4 w-4"/>
           </a>
         </div>
 
@@ -78,7 +107,11 @@ const Hero = () => (
       </div>
 
       <div className="relative h-[380px] sm:h-[480px] lg:h-[560px] rounded-3xl border border-black/10 bg-white/60">
-        <Spline scene="https://prod.spline.design/qQUip0dJPqrrPryE/scene.splinecode" style={{ width: '100%', height: '100%' }} />
+        <ErrorBoundary fallback={<SplineFallback />}> 
+          <Suspense fallback={<SplineFallback />}> 
+            <LazySpline scene="https://prod.spline.design/qQUip0dJPqrrPryE/scene.splinecode" style={{ width: '100%', height: '100%' }} />
+          </Suspense>
+        </ErrorBoundary>
       </div>
     </div>
   </section>
